@@ -1,5 +1,7 @@
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.io.File;
 import java.io.FileNotFoundException;
 import org.json.JSONObject;
@@ -8,37 +10,38 @@ import java.util.Scanner;
 
 
 public class MoneyManager {
-
+    String importData = ReadJSONFile("envelopes.json");
+    JSONObject UserEnvelopes = new JSONObject(importData); 
     HashMap<String, Double> Envelopes = new HashMap<String, Double>();
-    JSONObject UserEnvelopes = new JSONObject();
-
-    String userDataFile = "envelopes.json";
-    String importData = ReadFile(userDataFile);
-    
-
-    //Username check from JSON
     String userName;
     Boolean hasUserName = false;
+    
 
     public static void main(String args[]) {
         Scanner sc = new Scanner(System.in);
         MoneyManager user = new MoneyManager();
         //import user data
-
+        user.JSONToHash();
         //Test Envelope
         user.Envelopes.put("test", 3000.00);
+        
+        user.userName = user.ReadFile("userdata.txt");
+        if (user.userName != null && !user.userName.isEmpty()) {
+            user.hasUserName = true;
+        }
 
         user.Greet(sc);
         Boolean run = true;
 
         while (run) {     
             user.ListEnvelopes();
-            System.out.println("\nMake a selection to continue.");
+            System.out.println("\nWhat would you like to do?");
             System.out.println("\nExit: (0)\nCreate Envelope: (1)\nSelect Envelope: (2)\nSave: (3)\nUnknown: (4)\nUnkown: (5)\n");
             int select = sc.nextInt();
             switch (select) {
                 case 0:
-                    System.out.println("Goodbye.");
+                    System.out.println("Have a great day.");
+                    user.SaveFile();
                     run = false;
                     break;
                 case 1:
@@ -48,7 +51,7 @@ public class MoneyManager {
                     user.SelectEnvelope(sc);
                     break;
                 case 3:
-                    user.SaveToJSON();
+                    user.SaveFile();
             }
             
         }
@@ -64,6 +67,14 @@ public class MoneyManager {
             System.out.println("\nWelcome to Desktop Budgeting App. Enter your name to get started.");
             System.out.print("My name is: ");
             userName = sc.next();
+            try {
+                FileWriter myWriter = new FileWriter("userData.txt");
+                myWriter.write(userName);
+                myWriter.close();
+            } catch (IOException e) {
+                System.out.println("An error has occurred.");
+                e.printStackTrace();
+            }
         }
     }
     
@@ -74,6 +85,7 @@ public class MoneyManager {
         double amt = sc.nextDouble();
         Envelopes.put(input, amt);
         sc.nextLine();
+        SaveFile();
     }
 
     public void ListEnvelopes() {
@@ -111,20 +123,33 @@ public class MoneyManager {
                 String selection = sc.next();
                 if (selection.equals("y")) {
                     Envelopes.remove(key);
+                    UserEnvelopes.remove(key);
                     System.out.println("\nSuccessfully deleted " + key + ".");
                 }
                 break;
 
         }
-        
+        SaveFile();
+    }
+
+    //Read JSON
+    private static String ReadJSONFile(String fileName) {
+        try {
+            return new String(Files.readAllBytes(Paths.get(fileName)));
+        } catch (IOException e) {
+            System.out.println("An error occurred while reading the JSON file.");
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public String ReadFile(String fileName) {
+        String data = "";
         try {
             File myFile = new File(fileName);
             Scanner myReader = new Scanner(myFile);
             while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
+                data = myReader.nextLine();
                 System.out.println(data);
             }
             myReader.close();
@@ -132,10 +157,17 @@ public class MoneyManager {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
-        return fileName;
+        return data;
     }
 
-    public void SaveToJSON() {
+    public void JSONToHash() {
+        for (String key : UserEnvelopes.keySet()) {
+            double value = UserEnvelopes.getDouble(key);
+            Envelopes.put(key, value);
+        }
+    }
+
+    public void SaveFile() {
         //JSON Object UserEnvelopes
         for (String key : Envelopes.keySet()) {
             UserEnvelopes.put(key, Envelopes.get(key));
