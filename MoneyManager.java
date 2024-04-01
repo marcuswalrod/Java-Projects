@@ -1,19 +1,24 @@
-//import java.io.File;
-//import java.io.IOException;
-import org.json;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import org.json.JSONObject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Scanner;
 
 
 public class MoneyManager {
-    //envelope HashMap
-    HashMap<String, Double> Envelopes = new HashMap<String,Double>();
 
-    //This section may change to allow for storage 
+    HashMap<String, Double> Envelopes = new HashMap<String, Double>();
+    JSONObject UserEnvelopes = new JSONObject();
+
+    String userDataFile = "envelopes.json";
+    String importData = ReadFile(userDataFile);
+    
+
+    //Username check from JSON
+    String userName;
     Boolean hasUserName = false;
-    String userName = "Username";
-
 
     public static void main(String args[]) {
         Scanner sc = new Scanner(System.in);
@@ -29,7 +34,7 @@ public class MoneyManager {
         while (run) {     
             user.ListEnvelopes();
             System.out.println("\nMake a selection to continue.");
-            System.out.println("\nExit: (0)\nCreate Envelope: (1)\nSelect Envelope: (2)\nUnkown: (3)\nUnknown: (4)\nUnkown: (5)\n");
+            System.out.println("\nExit: (0)\nCreate Envelope: (1)\nSelect Envelope: (2)\nSave: (3)\nUnknown: (4)\nUnkown: (5)\n");
             int select = sc.nextInt();
             switch (select) {
                 case 0:
@@ -43,7 +48,7 @@ public class MoneyManager {
                     user.SelectEnvelope(sc);
                     break;
                 case 3:
-                    
+                    user.SaveToJSON();
             }
             
         }
@@ -112,6 +117,37 @@ public class MoneyManager {
 
         }
         
+    }
+
+    public String ReadFile(String fileName) {
+        try {
+            File myFile = new File(fileName);
+            Scanner myReader = new Scanner(myFile);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                System.out.println(data);
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        return fileName;
+    }
+
+    public void SaveToJSON() {
+        //JSON Object UserEnvelopes
+        for (String key : Envelopes.keySet()) {
+            UserEnvelopes.put(key, Envelopes.get(key));
+        }
+        try {
+            FileWriter myWriter = new FileWriter("envelopes.json");
+            myWriter.write(UserEnvelopes.toString());
+            myWriter.close();
+        } catch (IOException e) {
+            System.out.println("An error has occurred.");
+            e.printStackTrace();
+        }
     }
 }
     
